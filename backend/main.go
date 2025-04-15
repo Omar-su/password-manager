@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type PassWordRequest struct {
@@ -48,10 +49,17 @@ func passwordHandler(w http.ResponseWriter, r *http.Request){
 
 	defer file.Close()
 
+	// Hash the password with bcrypt
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(pwr.Password), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Error hashing password", http.StatusInternalServerError)
+		return
+	}
+	
 	entry := map[string]string{
 		"username": pwr.UserName,
 		"site":     pwr.Site,
-		"password": pwr.Password,
+		"password": string(hashedPassword),
 	}
 	
 	jsonEntry, _ := json.Marshal(entry)
